@@ -26,7 +26,7 @@ load_dotenv(base_dir / ".env")
 
 ### 3、创建 Redis 向量库配置
 config = RedisConfig(
-    index_name="p03_enterprise_policy",
+    index_name="p03RAG_Agent",
     redis_url="redis://192.168.88.130:6379",
 )
 
@@ -66,7 +66,8 @@ def get_retriever():
 
     return vector_store.as_retriever(
         search_kwargs={"k": 2}
-    )
+
+    )   #k=2 表示每次检索返回 2 个最相关的 Document 对象
 
 """
 构建知识库：build_knowledge_base() → add_documents(chunks)，向 Redis 写入文档。

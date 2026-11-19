@@ -1,4 +1,3 @@
-
 """
 P03：AI Agent 核心模块
 负责创建 Agent，并提供统一的问答入口。
@@ -28,7 +27,7 @@ if not api_key:
 
 ### 2、 创建 Qwen 模型对象
 llm = ChatOpenAI(
-    model="qwen-plus",
+    model="deepseek-v4.1-flash",
     api_key=api_key,
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
 )

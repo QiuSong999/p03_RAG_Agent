@@ -1,0 +1,215 @@
+# P03 项目阶段总结：RAG Agent 企业知识库助手
+
+## 一、项目目标
+
+项目名称：P03 基于 RAG 的 AI Agent 企业知识库助手
+
+项目路径：`D:\AI项目\p03_RAG_Agent`
+
+GitHub 仓库：https://github.com/QiuSong999/p03_RAG_Agent
+
+项目目标：构建一个能够根据企业规章制度回答用户问题的 AI 助手。用户使用自然语言提问，Agent 调用知识库检索工具，检索相关制度内容，再让大模型结合检索结果生成回答。
+
+核心目标不是让大模型自由发挥，而是尽量让回答有企业知识库作为依据。
+
+## 二、开发环境
+
+- 操作系统：Windows
+- Python：3.12
+- IDE：PyCharm
+- 大语言模型：DashScope 的 `qwen-plus`
+- Embedding 模型：`text-embedding-v3`
+- 向量存储：Redis
+- Agent 框架：LangChain
+- Redis 运行环境：Linux 虚拟机中的 Docker 容器
+- Redis 连接地址：`redis://192.168.88.130:6379`
+
+环境变量文件为项目根目录中的 `.env`，API Key 变量名为小写 `dashscope_api_key`。密钥不得提交到 GitHub。
+
+## 三、项目目录结构
+
+```text
+p03_RAG_Agent/
+├── .gitignore
+├── README.md
+├── agent.py
+├── knowledge/
+│   └── knowledge.txt
+└── rag/
+    ├── embedding.py
+    ├── loader.py
+    ├── retriever.py
+    └── tools.py
+```
+
+## 四、各文件的职责
+
+### 1. agent.py
+
+负责创建 AI Agent，配置大语言模型、系统提示词和工具。
+
+主要职责：
+- 接收用户问题。
+- 让大模型判断是否需要调用知识库工具。
+- 将工具返回结果交给大模型。
+- 生成最终回答。
+
+### 2. knowledge/knowledge.txt
+
+企业规章制度知识库原始文本。
+
+包含的主要制度类别：
+- 考勤制度
+- 请假制度
+- 费用报销制度
+- 出差制度
+- 办公设备与信息安全
+- 制度咨询与解释
+
+### 3. rag/loader.py
+
+负责加载知识库和切分文本。
+
+核心流程：
+
+`TextLoader → documents → RecursiveCharacterTextSplitter → chunks`
+
+当前有效配置：
+- `chunk_size=1000`
+- `chunk_overlap=0`
+- `separators` 包含标题分隔符、换行符及中文标点。
+
+当前实际运行结果为 2 个文本块。此配置暂时保留，不为了单条回答反复修改。
+
+### 4. rag/embedding.py
+
+配置 DashScope 的 Embedding 模型 `text-embedding-v3`，将文本转换成向量表示。
+
+Embedding 使系统能够根据文本语义进行向量相似度检索，而不仅仅依赖关键词是否相同。
+
+### 5. rag/retriever.py
+
+负责知识库向量存储与检索。
+
+主要功能：
+- `build_knowledge_base()`：构建知识库，将文档写入 Redis 向量存储。
+- `get_retriever()`：获取检索器。
+- 检索配置 `k=2`：每次查询返回最多 2 个相关文档。
+
+注意：构建知识库与日常查询是不同操作。重复构建可能造成重复写入或不必要的 Embedding 调用，因此不能默认每次启动 Agent 都重建知识库。
+
+之前的测试中曾出现重复检索文档，但具体原因尚未确认。本项目目前不为此继续扩展排查。
+
+### 6. rag/tools.py
+
+定义知识库检索工具 `search_company_policies(question)`。
+
+主要流程：
+1. 获取检索器。
+2. 根据用户问题检索相关 `Document`。
+3. 提取各文档的 `page_content`。
+4. 将相关文本整理成字符串返回给 Agent。
+
+工具负责执行检索，Agent 使用工具返回结果继续生成答案。
+
+### 7. .gitignore
+
+排除不应提交的文件，例如：
+- `.env`
+- `.env.*`
+- `venv/`
+- `.venv/`
+- `__pycache__/`
+- `.idea/`
+- 测试缓存目录
+
+### 8. README.md
+
+项目说明文档，记录项目目标、技术栈、目录结构、模块职责、环境变量和运行方式。
+
+README 已提交并推送至 GitHub。
+
+## 五、项目核心执行流程
+
+```text
+用户提出问题
+    ↓
+agent.py 接收问题
+    ↓
+大模型判断是否需要调用工具
+    ↓
+LangChain 执行 search_company_policies()
+    ↓
+获取 Redis 检索器
+    ↓
+将用户问题转换为向量并进行相似度检索
+    ↓
+返回相关 Document 对象
+    ↓
+tools.py 提取 page_content
+    ↓
+工具结果交回 Agent
+    ↓
+大模型结合问题、系统提示词和检索结果
+    ↓
+生成最终回答
+```
+
+## 六、已经学习的知识点
+
+### 1. RAG
+
+RAG 是检索增强生成。
+
+它先从外部知识库检索相关内容，再将检索结果提供给大模型作为上下文参考。
+
+作用：
+- 为回答提供外部知识依据。
+- 提高回答与企业实际制度的相关性。
+- 减少无关上下文和不必要的 Token 消耗。
+
+RAG 不能保证完全消除幻觉，最终效果还取决于检索质量、提示词和模型表现。
+
+### 2. Embedding
+
+Embedding 将文本映射为向量表示。
+
+语义相关的文本通常具有较高的向量相似度，因此即使用户问题和制度原文的措辞不同，也可能检索到相关内容。
+
+### 3. Redis 向量存储
+
+Redis 保存文档及其向量，供后续检索使用。
+
+知识库初始化时生成并存储文档向量；正常查询时主要生成用户问题的向量，再从已有知识库中检索，不需要每次重新向量化全部文档。
+
+### 4. Document
+
+`Document` 是 LangChain 用来封装文档内容及附加信息的对象。
+
+- `page_content`：文档正文。
+- `metadata`：附加信息，例如来源文件、页码或制度类别。
+
+工具通常将正文整理成字符串交给大模型，因为正文是模型生成答案时最直接的参考内容。
+
+### 5. Agent
+
+Agent 负责根据用户问题和当前任务决定是否调用工具，并利用工具结果继续处理任务。
+
+### 6. Tool Calling
+
+大模型决定调用什么工具、传入什么参数；LangChain 在应用程序中实际执行对应的 Python 函数，再将执行结果交回 Agent 流程。
+
+大模型本身不会直接在用户电脑上执行 Python 函数。
+
+### 7. system_prompt
+
+系统提示词规定模型的角色、行为规则和回答边界。
+
+例如：
+- 优先依据企业制度回答。
+- 不得将猜测说成正式制度。
+- 资料不足时明确说明。
+
+系统提示词不能保证模型绝对遵守规则，因此仍需要关注检索质量和回答表现。
+
+

@@ -29,7 +29,7 @@ if not api_key:
 
 ### 4、初始化 Embedding 模型
 embeddings_model = OpenAIEmbeddings(
-    model="text-embedding-v3",
+    model="qwen3.7-text-embedding-flash",
     api_key=api_key,
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     check_embedding_ctx_length=False,
