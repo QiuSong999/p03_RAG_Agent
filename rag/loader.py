@@ -45,18 +45,19 @@ def load_and_split_knowledge():
                         str(knowledge_file),
                         encoding="utf-8",
                         )
-    documents = loader.load()
+    documents = loader.load()   #返回list[Document]
 
     ### 4、 检查加载结果
+    #"文件没加载出任何文档" 或者 "加载出的所有文档去掉空白后全是空的"，满足任意一条就 raise ValueError 报错
     if not documents or not any(
             document.page_content.strip() for document in documents
-    ):
+    ):  #.strip() → 去掉首尾的空白字符（空格、换行 \n、制表符 \t 等）
         raise ValueError("知识库文件内容为空，请先添加制度资料。")
 
     ### 5、 创建文本切分器
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=0,
+        chunk_size=300,
+        chunk_overlap=50,
         separators=[
             "\n## ",
             "\n",
@@ -81,5 +82,6 @@ if __name__ == "__main__":
 
     for index, chunk in enumerate(chunks, start=1):
         print(f"\n~~~~~~~~~~~~第 {index} 个文本块~~~~~~~~~~~~")
+        print(f"字符长度：{len(chunk.page_content)}")
         print(chunk)    #输出的是切分好的一个个Document对象
         # ⭐Document 对象确实存在，只是 print(chunk) 展示的是对象的字符串表示，而不是必须带有 Document() 包裹的构造形式

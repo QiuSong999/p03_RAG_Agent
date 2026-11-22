@@ -67,6 +67,7 @@ def search_company_policies(question: str) -> str:
         
         制度资料 2：
         超过一天的事假或年假，需直属主管审核并由部门负责人审批。
+        ……
     """
 
     #最终流程为：Redis 返回文档对象 → 工具提取文档文本 → 返回字符串 → Agent 根据文本生成最终答案。

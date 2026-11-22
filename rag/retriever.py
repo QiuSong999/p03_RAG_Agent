@@ -26,7 +26,7 @@ load_dotenv(base_dir / ".env")
 
 ### 3、创建 Redis 向量库配置
 config = RedisConfig(
-    index_name="p03RAG_Agent",
+    index_name="p03RAG_Agent",  # 索引（会自动变成key的前缀）
     redis_url="redis://192.168.88.130:6379",
 )
 
@@ -80,16 +80,12 @@ def get_retriever():
 if __name__ == "__main__":
 
     # 构建知识库并存入 Redis（首次时需要，后续只检索就不需要存了）
-    build_knowledge_base()
+    build_knowledge_base()          #调用构架知识库的函数
 
-    # 创建检索器
-    retriever = get_retriever()
+    retriever = get_retriever()     #调用构建检索器的函数
 
-    # 设置测试问题
-    query = "员工报销时需要提交哪些材料？"
-
-    # 执行检索
-    results = retriever.invoke(query)
+    query = "员工报销时需要提交哪些材料？"# 设置测试问题
+    results = retriever.invoke(query)   #执行检索
 
     print(f"\n检索问题：{query}")
 

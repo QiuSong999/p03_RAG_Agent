@@ -18,7 +18,7 @@ import uvicorn
 
 
 ### 1、创建 FastAPI 应用对象，负责接收 HTTP 请求
-app = FastAPI(title="P03 RAG Agent 知识库助手")
+app = FastAPI(title="RAG Agent 知识库助手")
 
 
 ### 2、定义用户请求的数据结构
@@ -27,7 +27,7 @@ class QuestionRequest(BaseModel):
 
 
 ### 3、定义 Agent 问答入口函数
-def agent_qa(question: str) -> str:
+def agent_ans(question: str) -> str:
     """接收用户问题，调用 Agent，返回最终回答。"""
 
     # 调用 Agent，内部会完成问题分析、工具调用和答案生成
@@ -46,13 +46,13 @@ def root():
 
 ### 5、定义 POST 接口，接收用户问题并返回 Agent 回答
 @app.post("/ask")
-def agent_endpoint(request: QuestionRequest):
+def agent_answer(request: QuestionRequest):
 
     # 获取用户提交的问题
     question = request.question
 
     # 调用 Agent 问答函数
-    answer = agent_qa(question)
+    answer = agent_ans(question)
 
     # 将答案作为 JSON 数据返回
     return {
